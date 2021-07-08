@@ -29,16 +29,18 @@ public class FlinkMain {
     private final static String MATCH_1 = "([0]?[1-9]|[1|2][0-9]|[3][0|1])[/]([0]?[1-9]|[1][0-2])[/]([0-9]{4}|[0-9]{2})";
     private final static String MATCH_2 = "([0]?[1-9]|[1|2][0-9]|[3][0|1])[-]([0]?[1-9]|[1][0-2])[-]([0-9]{4}|[0-9]{2})";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ParseException {
+
+
 
         // setup flink environment
         Configuration conf = new Configuration();
         StreamExecutionEnvironment environment = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(conf);
         environment.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
-        // add the source and handle watermarks
+        // add the source
         Properties props = KafkaConfig.getFlinkSourceProperties(CONSUMER_GROUP_ID);
-       // System.out.println("sono dopo props");
+
         DataStream<Tuple2<Long, String>> stream = environment
                 .addSource(new FlinkKafkaConsumer<>("flink-topic", new SimpleStringSchema(), props))
                 // extract event timestamp and set it as key
@@ -73,26 +75,17 @@ public class FlinkMain {
                 .assignTimestampsAndWatermarks(new AscendingTimestampExtractor<Tuple2<Long, String>>() {
                     @Override
                     public long extractAscendingTimestamp(Tuple2<Long, String> tuple) {
-                        // specify event time
-                        // kafka's auto-watermarks generation is only related to offset not to event time
-                       // System.out.println(tuple._1());
+
                         return tuple._1();
                     }
                 })
                 .name("stream-source");
-     /*   AllWindowFunction<Tuple2<Long, String>, ?, TimeWindow> out;
-        stream
-                .timeWindowAll(Time.milliseconds(100))
-                .apply(( out: Collector[MyEvent]) => input
-                .toList.sortBy(_.getTimestamp)
-                .foreach(out.collect); // this windowing guarantee correct order by event time*/
 
         Query1Topology.buildTopology(stream);
-        Query2Topology.buildTopology(stream);
-        Query3Topology.buildTopology(stream);
+        //Query2Topology.buildTopology(stream);
+        //Query3Topology.buildTopology(stream);
         try {
             //execute the environment for DSP
-            System.out.println(environment.execute());
             environment.execute();
 
         } catch (Exception e) {

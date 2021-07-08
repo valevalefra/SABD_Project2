@@ -48,13 +48,11 @@ public class SimpleKafkaConsumer implements Runnable {
         this.topic = topic;
         this.output = output;
 
-
         // create the consumer
         consumer = createConsumer();
 
         // subscribe the consumer to the topic
         subscribeToTopic(consumer, topic);
-
 
     }
 
@@ -101,10 +99,8 @@ public class SimpleKafkaConsumer implements Runnable {
 
     }
 
-
     public void stop() {
         this.running = false;
     }
-
 
 }

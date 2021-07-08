@@ -1,13 +1,14 @@
 package flink.query3;
 
-import flink.query2.RankingOutcome;
 import org.apache.flink.streaming.api.functions.windowing.ProcessAllWindowFunction;
-import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
 import java.util.Date;
 
+/**
+ * Process window to set the right start date and sea type.
+ */
 public class DistanceProcessWindow extends ProcessAllWindowFunction<DistanceOutcome, DistanceOutcome,
         TimeWindow> {
 
@@ -17,7 +18,6 @@ public class DistanceProcessWindow extends ProcessAllWindowFunction<DistanceOutc
 
         iterable.forEach(k -> {
             k.setStartDate(new Date(context.window().getStart()));
-           // System.out.println(k.getStartDate());
             collector.collect(k);
         });
 

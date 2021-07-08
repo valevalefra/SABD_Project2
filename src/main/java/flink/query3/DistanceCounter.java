@@ -1,7 +1,5 @@
 package flink.query3;
 
-import java.util.Date;
-
 public class DistanceCounter {
 
     private Double distance;

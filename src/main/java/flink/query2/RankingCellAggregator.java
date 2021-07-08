@@ -7,6 +7,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Class implementing window aggregator for query 2 in order to
+ * obtain as result the first 3 cells with higher frequency of crossing of ships
+ * in AM time slot and in PM time slot.
+ */
 public class RankingCellAggregator implements AggregateFunction<ShipData, RankingCellAccumulator, RankingOutcome> {
     @Override
     public RankingCellAccumulator createAccumulator() {
@@ -68,10 +73,7 @@ public class RankingCellAggregator implements AggregateFunction<ShipData, Rankin
                 }
             }
         }
-       // System.out.println("after " + outcome.getAfterRanking());
-       // System.out.println("before "+ outcome.getBeforeRanking());
         return outcome;
-
     }
 
 }

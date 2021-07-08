@@ -5,7 +5,6 @@ import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
 
 public class SimpleKafkaProducer {
 
@@ -22,6 +21,10 @@ public class SimpleKafkaProducer {
 
     }
 
+    /**
+     * Create a new kafka producer
+     * @return the created kafka producer
+     */
     private static Producer<Long, String> createProducer() {
 
         Properties props = new Properties();
@@ -34,17 +37,16 @@ public class SimpleKafkaProducer {
         return new KafkaProducer<>(props);
     }
 
-    public void produce(Long key, String value) {
-
+    /**
+     * Function that publish a message to both the flink's and kafka streams' topic
+     * @param value line to be send
+     */
+    public void produce(String value) {
 
         final ProducerRecord<Long, String> record = new ProducerRecord<>("flink-topic", null,
                 value);
 
         producer.send(record);
-
-        // DEBUG
-           /* System.out.printf("sent record(key=%s value=%s) meta(partition=%d, offset=%d)\n",
-                    record.key(), record.value(), metadata.partition(), metadata.offset());*/
 
     }
 

@@ -12,11 +12,12 @@ import org.apache.flink.util.Collector;
 import scala.Tuple2;
 import utils.*;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 public class Query1Topology {
 
-    private static final double canaleDiSiciliaLon = 11.797696;
+    public static double canaleDiSiciliaLon = 11.797696;
 
 
     /**
@@ -24,22 +25,28 @@ public class Query1Topology {
      * @param source, DataStream containing tuples with as first value timestamp and
      *                record as the second one.
      */
-    public static void buildTopology(DataStream<Tuple2<Long, String>> source) {
+    public static void buildTopology(DataStream<Tuple2<Long, String>> source)  {
 
         /* Selecting required columns and filtering by longitude in order to
          * consider the Occidental Mediterranean Sea.
          */
         DataStream<ShipData> stream = source
-                .flatMap((FlatMapFunction<Tuple2<Long, String>, ShipData>) (tuple, collector) -> {
-                    ShipData data;
-                    String[] info = tuple._2().split(",");
-
-                    data = new ShipData(Double.parseDouble(info[3]), Double.parseDouble(info[4]), Integer.parseInt(info[1]), tuple._1());
-                    collector.collect(data);
+                .flatMap(new FlatMapFunction<Tuple2<Long, String>, ShipData>() {
+                    @Override
+                    public void flatMap(Tuple2<Long, String> tuple, Collector<ShipData> collector) {
+                        ShipData data;
+                        String[] info = tuple._2().split(",");
+                        data = new ShipData(Double.parseDouble(info[3]), Double.parseDouble(info[4]), Integer.parseInt(info[1]), tuple._1());
+                        collector.collect(data);
+                    }
                 })
-                .name("query1-extractor")
-                .filter((FilterFunction<ShipData>) shipData -> (shipData.getLongitude()<=canaleDiSiciliaLon))
-                .name("query1-filter");
+                .name("query1-selector")
+                .filter(new FilterFunction<ShipData>() {
+                    @Override
+                    public boolean filter(ShipData shipData) throws Exception {
+                        return (shipData.getLongitude()<=canaleDiSiciliaLon);
+                    }
+                }).name("query1-filter");
 
         // Stream partitioned by idCell
         KeyedStream<ShipData, String> keyedStream = stream.keyBy(ShipData::getIdCell);
@@ -56,8 +63,9 @@ public class Query1Topology {
                      FlinkKafkaProducer.Semantic.EXACTLY_ONCE))
                     .name("query1-weekly-mean-sink");
 
+
         // Assigning to the stream month windows
-        keyedStream.window(new MonthlyWindowAssigner())
+        keyedStream.window(TumblingEventTimeWindows.of(Time.days(28), Time.days(OutputUtils.OFFSET_MONTHLY+4)))
                    .aggregate(new AverageShipsAggregator(), new AverageProcessWindow())
                    .name("query1-monthly-mean")
                    .map(new ResultMapper())

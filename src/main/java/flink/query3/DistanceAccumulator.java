@@ -13,6 +13,7 @@ public class DistanceAccumulator {
         this.distanceMap = new HashMap<>();
     }
 
+    // Function to identify the distance travelled by each ship
     public void add(String idTrip, double latitude, double longitude) {
 
         DistanceCounter distances;
@@ -20,18 +21,9 @@ public class DistanceAccumulator {
             distances =  distanceMap.get(idTrip);
             double lastLong = distances.getLastLong();
             double lastLat = distances.getLastLat();
-            //double longDist = Math.abs(longitude-lastLong);
-            //double latDist = Math.abs(latitude-lastLat);
             double lastDistance = distances.getDistance();
             double distance = distance(latitude, lastLat, longitude, lastLong);
-            double euclideanDistance = euclideanDistance(latitude, longitude, lastLat, lastLong);
-           // System.out.println("distanza " + distance);
-           // System.out.println("euclidea " + euclideanDistance);
-           // double distance = Math.hypot(longDist, latDist);
-           // System.out.println("lastLong " + lastLong + " lastLongAfter " + longitude + "lastLat " + lastLat +
-            //        " lastLatAfter " + latitude + " distance " + distance );
             distances.setDistance(distance + lastDistance);
-
         }
         else{
             distances = new DistanceCounter();
@@ -45,7 +37,6 @@ public class DistanceAccumulator {
     public void merge(HashMap<String, DistanceCounter> map) {
 
         this.distanceMap.putAll(map);
-
 
     }
 
@@ -69,12 +60,5 @@ public class DistanceAccumulator {
         distance = Math.pow(distance, 2);
 
         return Math.sqrt(distance);
-    }
-
-    public static double euclideanDistance(double lat, double lng, double lat0, double lng0) {
-        double deglen = 110.25;
-        double x = lat - lat0;
-        double y = (lng - lng0) * Math.cos(lat0);
-        return deglen * sqrt(x * x + y * y) * 1000;
     }
 }

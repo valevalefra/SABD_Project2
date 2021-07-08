@@ -1,17 +1,13 @@
 package flink.query2;
 
-import flink.query1.AverageOutcome;
-import flink.query1.Query1Result;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
-
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
+/**
+ * Process window to set the right start date and sea type.
+ */
 public class RankingProcessWindow extends ProcessWindowFunction<RankingOutcome, RankingOutcome, String,
         TimeWindow> {
 
@@ -21,7 +17,6 @@ public class RankingProcessWindow extends ProcessWindowFunction<RankingOutcome, 
         iterable.forEach(k -> {
             k.setStartDate(new Date(context.window().getStart()));
             k.setSeaType(key);
-            //System.out.println("chiave " + key);
             collector.collect(k);
         });
     }

@@ -1,15 +1,15 @@
 package flink.query3;
 
-import flink.query1.AverageOutcome;
-import flink.query1.AverageShipsAccumulator;
-import flink.query2.RankingOutcome;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import utils.ShipData;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Class implementing window aggregator for query 3 in order to
+ * obtain as result the first 5 tripID that have traveled the longest distance
+ */
 public class DistanceAggregator implements AggregateFunction<ShipData, DistanceAccumulator, DistanceOutcome> {
     @Override
     public DistanceAccumulator createAccumulator() {
@@ -56,7 +56,6 @@ public class DistanceAggregator implements AggregateFunction<ShipData, DistanceA
                 }
             }
         }
-       // System.out.println("ranking " + outcome.getRanking());
         return outcome;
     }
 }

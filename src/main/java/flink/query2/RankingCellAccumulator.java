@@ -18,9 +18,10 @@ public class RankingCellAccumulator {
         this.frequencyMapAfter = new HashMap<>();
     }
 
-
+    /* Function to identify if the event happened before
+     * or after 12:00 AM.
+     */
     public void add(String idShip, long timestamp, String idCell) {
-
 
         Calendar threshold = Calendar.getInstance();
         Date date = new Date(timestamp);
@@ -39,7 +40,7 @@ public class RankingCellAccumulator {
 
         //check if it falls in am or pm
         if (elem.before(threshold)) {
-            // add to morning ranking
+            // add to am ranking
             Set<String> set = this.beforeMidDay.get(idCell);
             if(set == null) set = new HashSet<>();
             set.add(idShip);
@@ -47,7 +48,7 @@ public class RankingCellAccumulator {
             this.frequencyMapBefore.put(idCell, this.beforeMidDay.get(idCell).size());
 
         } else {
-            // add to afternoon ranking
+            // add to pm ranking
             Set<String> set = this.afterMidDay.get(idCell);
             if(set == null) set = new HashSet<>();
             set.add(idShip);
@@ -74,6 +75,7 @@ public class RankingCellAccumulator {
         return frequencyMapAfter;
     }
 
+    // Function to merge records with the same time slot
     public void merge(HashMap<String, Set<String>> beforeMidDay, HashMap<String, Set<String>> afterMidDay) {
 
         beforeMidDay.forEach((k,v) -> v.addAll(this.beforeMidDay.get(k)));

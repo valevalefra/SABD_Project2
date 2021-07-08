@@ -26,7 +26,6 @@ public class DistanceOutcome {
         this.ranking.add(tuple);
     }
 
-
     public List<Tuple2<String, Double>> getRanking() {
         return ranking;
     }

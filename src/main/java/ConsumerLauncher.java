@@ -13,16 +13,19 @@ import java.util.Collections;
 import java.util.Properties;
 import java.util.Scanner;
 
+/**
+ * Class used to launch consumers for Flink output
+ */
 public class ConsumerLauncher {
 
     public static void main(String[] args) {
 
-        //PULISCI DIRECTORYYYYY
+        //Clean folder that contain results
+        OutputUtils.cleanFolder();
 
         ArrayList<SimpleKafkaConsumer> consumers = new ArrayList<>();
 
         int id = 0;
-
 
         for (int i = 0; i < KafkaConfig.LIST_TOPICS.length; i++) {
             SimpleKafkaConsumer consumer = new SimpleKafkaConsumer(id,
@@ -42,6 +45,5 @@ public class ConsumerLauncher {
         for (SimpleKafkaConsumer consumer : consumers) {
             consumer.stop();
         }
-
     }
 }

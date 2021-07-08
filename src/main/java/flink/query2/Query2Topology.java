@@ -16,10 +16,19 @@ import utils.ShipData;
 
 import java.text.SimpleDateFormat;
 
+
 public class Query2Topology {
 
+    /**
+     * Function to build the topology and answer to second query.
+     * @param source, DataStream containing tuples with as first value timestamp and
+     *                record as the second one.
+     */
     public static void buildTopology(DataStream<Tuple2<Long, String>> source) {
 
+        /* Selecting required columns in order to obtain information
+         * about latitude, longitude, timestamp and shipId.
+         */
         DataStream<ShipData> stream = source
                 .flatMap(new FlatMapFunction<Tuple2<Long, String>, ShipData>() {
                     @Override
@@ -32,7 +41,10 @@ public class Query2Topology {
                     }
                 });
 
+        // Stream partitioned by sea type (Oriental or Occidental)
         KeyedStream<ShipData, String> keyedStream = stream.keyBy(ShipData::getSeaType);
+
+        // Assigning to the stream seven days windows
         keyedStream.window(TumblingEventTimeWindows.of(Time.days(7)))
                     .aggregate(new RankingCellAggregator(), new RankingProcessWindow())
                     .map(new Query2Topology.ResultMapper())
@@ -43,6 +55,7 @@ public class Query2Topology {
                             FlinkKafkaProducer.Semantic.EXACTLY_ONCE))
                     .name("query2-weekly-sink");
 
+        // Assigning to the stream month windows
         keyedStream.window(new MonthlyWindowAssigner())
                 .aggregate(new RankingCellAggregator(), new RankingProcessWindow())
                 .map(new Query2Topology.ResultMapper())
@@ -54,9 +67,13 @@ public class Query2Topology {
                 .name("query2-monthly-sink");
     }
 
+    /**
+     * Inner class to extract records in such a way to be passed
+     * to Kafka Consumer as required.
+     */
     private static class ResultMapper implements MapFunction<RankingOutcome, String> {
         @Override
-        public String map(RankingOutcome rankingOutcome) throws Exception {
+        public String map(RankingOutcome rankingOutcome) {
 
             StringBuilder builder = new StringBuilder();
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");

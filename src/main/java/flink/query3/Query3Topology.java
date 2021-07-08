@@ -16,8 +16,16 @@ import java.text.SimpleDateFormat;
 
 public class Query3Topology {
 
+    /**
+     * Function to build the topology and answer to third query.
+     * @param source, DataStream containing tuples with as first value timestamp and
+     *                record as the second one.
+     */
     public static void buildTopology(DataStream<Tuple2<Long, String>> source) {
 
+        /* Selecting required columns in order to obtain information
+         * about latitude, longitude, timestamp and tripId.
+         */
         DataStream<ShipData> stream = source
                 .flatMap(new FlatMapFunction<Tuple2<Long, String>, ShipData>() {
                     @Override
@@ -29,6 +37,8 @@ public class Query3Topology {
                         collector.collect(data);
                     }
                 });
+
+        // Assigning to the stream 1 hour windows
         stream.windowAll(TumblingEventTimeWindows.of(Time.hours(1)))
                 .aggregate(new DistanceAggregator(), new DistanceProcessWindow())
                 .map(new Query3Topology.ResultMapper())
@@ -39,6 +49,7 @@ public class Query3Topology {
                         FlinkKafkaProducer.Semantic.EXACTLY_ONCE))
                 .name("query3-1hour-sink");
 
+        // Assigning to the stream 2 hours windows
         stream.windowAll(TumblingEventTimeWindows.of(Time.hours(2)))
                 .aggregate(new DistanceAggregator(), new DistanceProcessWindow())
                 .map(new Query3Topology.ResultMapper())
