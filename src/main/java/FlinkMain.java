@@ -4,7 +4,6 @@ import flink.query3.Query3Topology;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -12,8 +11,9 @@ import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExt
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.util.Collector;
 import scala.Tuple2;
-import utils.ComputeCell;
-import utils.KafkaConfig;
+import utils.queries_utils.ComputeCell;
+import config.Configuration;
+import utils.queries_utils.ResultsUtils;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -31,16 +31,15 @@ public class FlinkMain {
 
     public static void main(String[] args) throws ParseException {
 
-
-
         // setup flink environment
-        Configuration conf = new Configuration();
+        org.apache.flink.configuration.Configuration conf = new org.apache.flink.configuration.Configuration();
         StreamExecutionEnvironment environment = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(conf);
         environment.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         // add the source
-        Properties props = KafkaConfig.getFlinkSourceProperties(CONSUMER_GROUP_ID);
-
+        Properties props = Configuration.getFlinkSourceProperties(CONSUMER_GROUP_ID);
+        ResultsUtils outputUtils = new ResultsUtils();
+        outputUtils.takeOffsets();
         DataStream<Tuple2<Long, String>> stream = environment
                 .addSource(new FlinkKafkaConsumer<>("flink-topic", new SimpleStringSchema(), props))
                 // extract event timestamp and set it as key
@@ -57,6 +56,7 @@ public class FlinkMain {
                             else if (event.split(" ")[0].matches(MATCH_2)) eventTime = formatter2.parse(event).getTime();
                             collector.collect(new Tuple2<>(eventTime, s));
                         } catch (ParseException e) {
+                            System.err.println("Error in parsing in FlinkMain");
                         }
                     }
                 })
@@ -82,10 +82,10 @@ public class FlinkMain {
                 .name("stream-source");
 
         Query1Topology.buildTopology(stream);
-        //Query2Topology.buildTopology(stream);
-        //Query3Topology.buildTopology(stream);
+        Query2Topology.buildTopology(stream);
+        Query3Topology.buildTopology(stream);
         try {
-            //execute the environment for DSP
+            // execute the environment for DSP
             environment.execute();
 
         } catch (Exception e) {

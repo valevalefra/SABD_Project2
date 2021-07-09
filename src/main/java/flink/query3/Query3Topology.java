@@ -8,9 +8,10 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
 import org.apache.flink.util.Collector;
 import scala.Tuple2;
-import utils.FlinkStringToKafkaSerializer;
-import utils.KafkaConfig;
-import utils.ShipData;
+import utils.kafka_utils.FlinkStringToKafkaSerializer;
+import config.Configuration;
+import utils.beans.ShipData;
+import utils.metrics.MetricsInvoker;
 
 import java.text.SimpleDateFormat;
 
@@ -36,32 +37,40 @@ public class Query3Topology {
                         data = new ShipData(Double.parseDouble(info[3]), Double.parseDouble(info[4]), info[info.length - 1], tuple._1());
                         collector.collect(data);
                     }
-                });
+                }).name("query3-selector");;
 
         // Assigning to the stream 1 hour windows
         stream.windowAll(TumblingEventTimeWindows.of(Time.hours(1)))
                 .aggregate(new DistanceAggregator(), new DistanceProcessWindow())
                 .map(new Query3Topology.ResultMapper())
-                .addSink(new FlinkKafkaProducer<>(KafkaConfig.FLINK_QUERY_3_1HOUR_TOPIC,
-                        new FlinkStringToKafkaSerializer(KafkaConfig.FLINK_QUERY_3_1HOUR_TOPIC),
-                        KafkaConfig.getFlinkSinkProperties("producer" +
-                                KafkaConfig.FLINK_QUERY_3_1HOUR_TOPIC),
+                .name("query3-1hour-distance")
+                //.addSink(new MetricsInvoker())
+                .addSink(new FlinkKafkaProducer<>(Configuration.FLINK_QUERY_3_1HOUR_TOPIC,
+                        new FlinkStringToKafkaSerializer(Configuration.FLINK_QUERY_3_1HOUR_TOPIC),
+                        Configuration.getFlinkSinkProperties("producer" +
+                                Configuration.FLINK_QUERY_3_1HOUR_TOPIC),
                         FlinkKafkaProducer.Semantic.EXACTLY_ONCE))
-                .name("query3-1hour-sink");
+                .name("query3-1hour-distance-sink");
 
         // Assigning to the stream 2 hours windows
         stream.windowAll(TumblingEventTimeWindows.of(Time.hours(2)))
                 .aggregate(new DistanceAggregator(), new DistanceProcessWindow())
                 .map(new Query3Topology.ResultMapper())
-                .addSink(new FlinkKafkaProducer<>(KafkaConfig.FLINK_QUERY_3_2HOUR_TOPIC,
-                        new FlinkStringToKafkaSerializer(KafkaConfig.FLINK_QUERY_3_2HOUR_TOPIC),
-                        KafkaConfig.getFlinkSinkProperties("producer" +
-                                KafkaConfig.FLINK_QUERY_3_2HOUR_TOPIC),
+                .name("query3-2hour-distance")
+                //.addSink(new MetricsInvoker())
+                .addSink(new FlinkKafkaProducer<>(Configuration.FLINK_QUERY_3_2HOUR_TOPIC,
+                        new FlinkStringToKafkaSerializer(Configuration.FLINK_QUERY_3_2HOUR_TOPIC),
+                        Configuration.getFlinkSinkProperties("producer" +
+                                Configuration.FLINK_QUERY_3_2HOUR_TOPIC),
                         FlinkKafkaProducer.Semantic.EXACTLY_ONCE))
-                .name("query3-2hour-sink");
+                .name("query3-2hour-distance-sink");
 
     }
 
+    /**
+     * Inner class to extract records in such a way to be passed
+     * to Kafka Consumer as required.
+     */
     private static class ResultMapper implements MapFunction<DistanceOutcome, String> {
         @Override
         public String map(DistanceOutcome distanceOutcome) throws Exception {
@@ -77,7 +86,6 @@ public class Query3Topology {
                 builder.append(distanceOutcome.getRanking().get(i)._2());
                 if(i!=distanceOutcome.getRanking().size()-1) builder.append(";");
             }
-            System.out.println(builder.toString());
             return builder.toString();
         }
     }

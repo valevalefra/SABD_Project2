@@ -10,9 +10,12 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
 import org.apache.flink.util.Collector;
 import scala.Tuple2;
-import utils.*;
+import utils.beans.ShipData;
+import utils.kafka_utils.FlinkStringToKafkaSerializer;
+import config.Configuration;
+import utils.metrics.MetricsInvoker;
+import utils.queries_utils.ResultsUtils;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 public class Query1Topology {
@@ -51,28 +54,29 @@ public class Query1Topology {
         // Stream partitioned by idCell
         KeyedStream<ShipData, String> keyedStream = stream.keyBy(ShipData::getIdCell);
 
-        // Assigning to the stream seven days windows
-        keyedStream.window(TumblingEventTimeWindows.of(Time.days(7)))
+        // Assigning to the stream seven days windows, with calculated offset
+        keyedStream.window(TumblingEventTimeWindows.of(Time.days(7), Time.days(ResultsUtils.OFFSET_WEEKLY_OCCIDENTAL)))
                    .aggregate(new AverageShipsAggregator(), new AverageProcessWindow())
                    .name("query1-weekly-mean")
                    .map(new ResultMapper())
-                   .addSink(new FlinkKafkaProducer<>(KafkaConfig.FLINK_QUERY_1_WEEKLY_TOPIC,
-                     new FlinkStringToKafkaSerializer(KafkaConfig.FLINK_QUERY_1_WEEKLY_TOPIC),
-                     KafkaConfig.getFlinkSinkProperties("producer" +
-                     KafkaConfig.FLINK_QUERY_1_WEEKLY_TOPIC),
+                   //.addSink(new MetricsInvoker())
+                   .addSink(new FlinkKafkaProducer<>(Configuration.FLINK_QUERY_1_WEEKLY_TOPIC,
+                     new FlinkStringToKafkaSerializer(Configuration.FLINK_QUERY_1_WEEKLY_TOPIC),
+                     Configuration.getFlinkSinkProperties("producer" +
+                     Configuration.FLINK_QUERY_1_WEEKLY_TOPIC),
                      FlinkKafkaProducer.Semantic.EXACTLY_ONCE))
                     .name("query1-weekly-mean-sink");
 
-
-        // Assigning to the stream month windows
-        keyedStream.window(TumblingEventTimeWindows.of(Time.days(28), Time.days(OutputUtils.OFFSET_MONTHLY+4)))
+        // Assigning to the stream 28 days windows, with calculated offset
+        keyedStream.window(TumblingEventTimeWindows.of(Time.days(28), Time.days(ResultsUtils.OFFSET_MONTHLY_OCCIDENTAL)))
                    .aggregate(new AverageShipsAggregator(), new AverageProcessWindow())
                    .name("query1-monthly-mean")
                    .map(new ResultMapper())
-                   .addSink(new FlinkKafkaProducer<>(KafkaConfig.FLINK_QUERY_1_MONTHLY_TOPIC,
-                    new FlinkStringToKafkaSerializer(KafkaConfig.FLINK_QUERY_1_MONTHLY_TOPIC),
-                    KafkaConfig.getFlinkSinkProperties("producer" +
-                    KafkaConfig.FLINK_QUERY_1_MONTHLY_TOPIC),
+                    //.addSink(new MetricsInvoker())
+                   .addSink(new FlinkKafkaProducer<>(Configuration.FLINK_QUERY_1_MONTHLY_TOPIC,
+                    new FlinkStringToKafkaSerializer(Configuration.FLINK_QUERY_1_MONTHLY_TOPIC),
+                    Configuration.getFlinkSinkProperties("producer" +
+                    Configuration.FLINK_QUERY_1_MONTHLY_TOPIC),
                     FlinkKafkaProducer.Semantic.EXACTLY_ONCE))
                     .name("query1-monthly-mean-sink");
     }
@@ -102,16 +106,16 @@ public class Query1Topology {
 
             for(Query1Result result : averageOutcome.getList()) {
 
-                if (result.getShip35() != 0L && result.getAvg35() != 0.0) {
+                if (result.getAvg35() != 0.0) {
                     avg35 = result.getAvg35();
                 }
-                if (result.getShip6069() != 0L && result.getAvg6069() != 0.0) {
+                if (result.getAvg6069() != 0.0) {
                     avg6069 = result.getAvg6069();
                 }
-                if (result.getShip7079() != 0L && result.getAvg7079() != 0.0) {
+                if (result.getAvg7079() != 0.0) {
                     avg7079 = result.getAvg7079();
                 }
-                if (result.getShipO() != 0L && result.getAvgO() != 0.0) {
+                if (result.getAvgO() != 0.0) {
                     avgO = result.getAvgO();
                 }
             }

@@ -1,9 +1,7 @@
 package flink.query1;
 
 import org.apache.flink.api.common.functions.AggregateFunction;
-import utils.ShipData;
-
-import java.util.Date;
+import utils.beans.ShipData;
 
 /**
  * Class implementing window aggregator for query1, in order to

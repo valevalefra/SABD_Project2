@@ -1,7 +1,7 @@
 package flink.query2;
 
 import org.apache.flink.api.common.functions.AggregateFunction;
-import utils.ShipData;
+import utils.beans.ShipData;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.Map;
 
 /**
  * Class implementing window aggregator for query 2 in order to
- * obtain as result the first 3 cells with higher frequency of crossing of ships
+ * obtain as result the first 3 cells with higher frequency of ships crossing
  * in AM time slot and in PM time slot.
  */
 public class RankingCellAggregator implements AggregateFunction<ShipData, RankingCellAccumulator, RankingOutcome> {
@@ -47,13 +47,13 @@ public class RankingCellAggregator implements AggregateFunction<ShipData, Rankin
                 try {
                     outcome.setBeforeRanking(beforeList.get(i).getKey());
                 } catch (IndexOutOfBoundsException ignored) {
-                    // Less than RANK_SIZE elements
+                    System.err.println("Wrong number of elements in AM list");
                 }
 
                 try {
                     outcome.setAfterRanking(afterList.get(i).getKey());
                 } catch (IndexOutOfBoundsException ignored) {
-                    // Less than RANK_SIZE elements
+                    System.err.println("Wrong number of elements in PM list");
                 }
             }
         }
@@ -62,14 +62,14 @@ public class RankingCellAggregator implements AggregateFunction<ShipData, Rankin
                 try {
                     outcome.setBeforeRanking(beforeList.get(i).getKey());
                 } catch (IndexOutOfBoundsException ignored) {
-                    // Less than RANK_SIZE elements
+                    System.err.println("Wrong number of elements in AM list");
                 }
             }
             for(int i = 0; i<afterList.size(); i++ ){
                 try {
                     outcome.setAfterRanking(afterList.get(i).getKey());
                 } catch (IndexOutOfBoundsException ignored) {
-                    // Less than RANK_SIZE elements
+                    System.err.println("Wrong number of elements in PM list");
                 }
             }
         }

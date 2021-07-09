@@ -1,14 +1,14 @@
 package flink.query3;
 
 import org.apache.flink.api.common.functions.AggregateFunction;
-import utils.ShipData;
+import utils.beans.ShipData;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Class implementing window aggregator for query 3 in order to
- * obtain as result the first 5 tripID that have traveled the longest distance
+ * obtain as result the first 5 tripIDs that have traveled the longest distance
  */
 public class DistanceAggregator implements AggregateFunction<ShipData, DistanceAccumulator, DistanceOutcome> {
     @Override
@@ -30,10 +30,10 @@ public class DistanceAggregator implements AggregateFunction<ShipData, DistanceA
 
     @Override
     public DistanceOutcome getResult(DistanceAccumulator distanceAccumulator) {
-        // Create the lists from elements of HashMap
+        // Create the list from elements of HashMap
         List<Map.Entry<String, DistanceCounter>> distanceList = new LinkedList<>(distanceAccumulator.getDistanceMap().entrySet());
 
-        // Sort the lists in descending order
+        // Sort the list in descending order
         distanceList.sort((o1, o2) -> o2.getValue().getDistance().compareTo(o1.getValue().getDistance()));
 
         DistanceOutcome outcome = new DistanceOutcome();
@@ -42,7 +42,7 @@ public class DistanceAggregator implements AggregateFunction<ShipData, DistanceA
                 try {
                     outcome.setRankingByDistance(distanceList.get(i).getKey(), distanceList.get(i).getValue().getDistance());
                 } catch (IndexOutOfBoundsException ignored) {
-                    // Less than RANK_SIZE elements
+                    System.err.println("Wrong number of elements in list");
                 }
 
             }
@@ -52,7 +52,7 @@ public class DistanceAggregator implements AggregateFunction<ShipData, DistanceA
                 try {
                     outcome.setRankingByDistance(distanceList.get(i).getKey(), distanceList.get(i).getValue().getDistance());
                 } catch (IndexOutOfBoundsException ignored) {
-                    // Less than RANK_SIZE elements
+                    System.err.println("Wrong number of elements in list");
                 }
             }
         }

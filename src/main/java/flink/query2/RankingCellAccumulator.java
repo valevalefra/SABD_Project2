@@ -4,9 +4,11 @@ import java.util.*;
 
 public class RankingCellAccumulator {
 
-    //key id cell value id ship
+    // Maps containing as key the idCell and, as value, a set of idShip
     private final HashMap<String, Set<String>> beforeMidDay;
     private final HashMap<String, Set<String>> afterMidDay;
+
+    // Maps containing as key the idCell and, as value, the calculated frequency
     private final HashMap<String, Integer> frequencyMapBefore;
     private final HashMap<String, Integer> frequencyMapAfter;
 
@@ -38,9 +40,10 @@ public class RankingCellAccumulator {
         // set threshold at 12:00 of the same day
         threshold.set(Calendar.HOUR_OF_DAY, 12);
 
-        //check if it falls in am or pm
+        // check if it falls in am or pm
         if (elem.before(threshold)) {
-            // add to am ranking
+            /* add the shipId to am ranking, in the specific idCell,
+            if it doesn't exist.*/
             Set<String> set = this.beforeMidDay.get(idCell);
             if(set == null) set = new HashSet<>();
             set.add(idShip);
@@ -48,7 +51,8 @@ public class RankingCellAccumulator {
             this.frequencyMapBefore.put(idCell, this.beforeMidDay.get(idCell).size());
 
         } else {
-            // add to pm ranking
+             /* add the shipId to pm ranking, in the specific idCell,
+            if it doesn't exist.*/
             Set<String> set = this.afterMidDay.get(idCell);
             if(set == null) set = new HashSet<>();
             set.add(idShip);

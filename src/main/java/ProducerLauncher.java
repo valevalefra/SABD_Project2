@@ -1,7 +1,7 @@
 
 import flink.query1.Query1Topology;
 import kafka.SimpleKafkaProducer;
-import utils.SpeedUpEventTime;
+import utils.beans.SpeedUpEventTime;
 import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Class used to start a producer that reads from file and send tuples to Kafka topics
+ * Class used to start a producer that reads from file and sends tuples to Kafka topics
  */
 
 public class ProducerLauncher {
@@ -31,7 +31,7 @@ public class ProducerLauncher {
     private static long max = Long.MIN_VALUE;
 
 
-    public static void main(String[] args) throws IOException, InterruptedException, ParseException {
+    public static void main(String[] args) throws IOException, InterruptedException {
 
         //Create producer
         SimpleKafkaProducer producer = new SimpleKafkaProducer(TOPIC);
@@ -43,9 +43,6 @@ public class ProducerLauncher {
         int count = 0;
         long range = 1000L;
         ArrayList<SpeedUpEventTime> listEvent = new ArrayList<>();
-        //List<Date> set = new ArrayList<>();
-        TreeMap<String, Double> occidentalMap = new TreeMap<>();
-        TreeMap<String, Double> orientalMap = new TreeMap<>();
 
         while ((payload = bufferedReader.readLine()) != null) {
             try {
@@ -74,8 +71,12 @@ public class ProducerLauncher {
         double proportion = range /(double)(max - min);
         //Order events by timestamp
         Collections.sort(listEvent);
-        Long previousTime = null;
 
+        Long previousTime = null;
+        int countOccidental = 0;
+        int countOriental = 0;
+        String occidentalFirstDate = null;
+        String orientalFirstDate = null;
         for (SpeedUpEventTime speed: listEvent){
             Long event = speed.getEventTime();
             String line = speed.getPayload();
@@ -86,38 +87,29 @@ public class ProducerLauncher {
             previousTime = event;
             DateFormat formatterEvent = new SimpleDateFormat("yyyy-MM-dd HH:mm");
             String date = formatterEvent.format(new Date(event));
-            Double longitude = Double.parseDouble(line.split(",")[3]);
-            if(longitude <= Query1Topology.canaleDiSiciliaLon){
-                 occidentalMap.put(date, longitude);
+            double longitude = Double.parseDouble(line.split(",")[3]);
+            // Memorizing first date tuple for the Occidental Mediterranean Sea
+            if(longitude <= Query1Topology.canaleDiSiciliaLon && countOccidental==0){
+                occidentalFirstDate = date;
+                countOccidental++;
             }
-            else{
-                orientalMap.put(date, longitude);
+            // Memorizing first date tuple for the Oriental Mediterranean Sea
+            else if (longitude > Query1Topology.canaleDiSiciliaLon && countOriental==0) {
+                orientalFirstDate = date;
+                countOriental++;
             }
-            //set.add((new Date(event)));
             producer.produce(line);
         }
-      /*  //Sorting
-        Collections.sort(set, new Comparator<Date>() {
-            @Override
-            public int compare(Date lhs, Date rhs) {
-                if (lhs.getTime() < rhs.getTime())
-                    return -1;
-                else if (lhs.getTime() == rhs.getTime())
-                    return 0;
-                else
-                    return 1;
-            }
-        });*/
-        System.out.println(occidentalMap.firstEntry());
-        System.out.println(orientalMap.firstEntry());
+
+        // Creating a JSONObject containing first dates for the two Mediterranean seas
         JSONObject dates = new JSONObject();
-        dates.put("dateOccidental", occidentalMap.firstEntry().getKey());
-        dates.put("dateOriental", orientalMap.firstEntry().getKey());
-        FileWriter fileJson = new FileWriter("Results/dates.json");
-        fileJson.write(dates.toString());
-        fileJson.flush();
-
-
-        //OutputUtils.takeOffset(set.stream());
+        dates.put("dateOccidental", occidentalFirstDate);
+        dates.put("dateOriental", orientalFirstDate);
+        try (FileWriter fileJson = new FileWriter("src/main/java/utils/queries_utils/dates.json")) {
+            fileJson.write(dates.toString());
+            fileJson.flush();
+        }catch (IOException e) {
+            System.err.println("Error in writing the Json file");
+        }
         producer.close();}
 }

@@ -30,7 +30,7 @@ public class AverageProcessWindow extends ProcessWindowFunction<AverageOutcome, 
                 k.getShipMeans().forEach((k1, v) -> {
                     Double avg = (double) v/daysBetween;
                     Query1Result result = new Query1Result();
-                    result.switchType(k1, avg, v);
+                    result.switchType(k1, avg);
                     listResult.add(result);
                 });
                 k.setList(listResult);

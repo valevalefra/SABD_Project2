@@ -4,7 +4,7 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import utils.KafkaConfig;
+import config.Configuration;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -29,7 +29,7 @@ public class SimpleKafkaConsumer implements Runnable {
      * @return the created consumer
      */
     private Consumer<String, String> createConsumer() {
-        Properties props = KafkaConfig.getKafkaParametricConsumerProperties(CONSUMER_GROUP_ID);
+        Properties props = Configuration.getKafkaParametricConsumerProperties(CONSUMER_GROUP_ID);
         return new KafkaConsumer<>(props);
     }
 
@@ -62,7 +62,7 @@ public class SimpleKafkaConsumer implements Runnable {
         System.out.println("Consumer " + id + " running...");
         try {
             while (running) {
-                Thread.sleep(1000);
+                Thread.sleep(2000);
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
                 System.out.println(!records.isEmpty());
                 if (!records.isEmpty()) {

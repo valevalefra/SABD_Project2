@@ -1,8 +1,8 @@
 package kafka;
 
-import config.Configuration;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
+import config.Configuration;
 
 import java.util.Properties;
 
@@ -43,7 +43,7 @@ public class SimpleKafkaProducer {
      */
     public void produce(String value) {
 
-        final ProducerRecord<Long, String> record = new ProducerRecord<>("flink-topic", null,
+        final ProducerRecord<Long, String> record = new ProducerRecord<>(Configuration.FLINK_TOPIC, null,
                 value);
 
         producer.send(record);
