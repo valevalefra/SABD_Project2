@@ -38,7 +38,7 @@ public class SimpleKafkaProducer {
     }
 
     /**
-     * Function that publish a message to both the flink's and kafka streams' topic
+     * Function that publish a message to the flink's topic
      * @param value line to be send
      */
     public void produce(String value) {
